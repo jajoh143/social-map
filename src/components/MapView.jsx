@@ -104,16 +104,28 @@ export default function MapView({ users, events, myLocation, locationReady, sele
 
     L.control.zoom({ position: "bottomright" }).addTo(mapInstance.current);
 
-    // Placeholder dot at Chicago center until real location arrives
-    myDotRef.current = L.circleMarker(CHICAGO_CENTER, {
-      radius: 9,
-      fillColor: "#3b82f6",
-      color: "#1d4ed8",
-      weight: 2,
-      fillOpacity: 1,
-    })
+    // My profile avatar marker
+    const myIcon = L.divIcon({
+      className: "",
+      html: `
+        <div style="
+          width:46px;height:46px;border-radius:50%;
+          border:3px solid #3b82f6;
+          overflow:hidden;background:#1e3a5f;
+          box-shadow:0 0 0 3px rgba(59,130,246,0.35), 0 3px 12px rgba(0,0,0,0.7);
+          cursor:pointer;
+        ">
+          <img src="https://api.dicebear.com/7.x/personas/svg?seed=me"
+               style="width:100%;height:100%;object-fit:cover;" />
+        </div>`,
+      iconSize: [46, 46],
+      iconAnchor: [23, 23],
+      popupAnchor: [0, -26],
+    });
+
+    myDotRef.current = L.marker(CHICAGO_CENTER, { icon: myIcon, zIndexOffset: 1000 })
       .addTo(mapInstance.current)
-      .bindPopup('<span style="color:#f9fafb;font-weight:700">You are here</span>');
+      .bindPopup('<span style="color:#f9fafb;font-weight:700">You</span>');
   }, []);
 
   // Move the blue dot whenever myLocation updates; fly there on first real fix
