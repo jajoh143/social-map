@@ -50,10 +50,19 @@ body { background: var(--gray-50); color: var(--gray-900); }
 .logo-icon { font-size: 1.25rem; }
 .logo-text { font-size: 1.25rem; font-weight: 700; color: var(--blue); letter-spacing: -.5px; }
 .header-right { display: flex; align-items: center; gap: 10px; }
-.my-location-badge {
-  font-size: 0.75rem; font-weight: 600; color: var(--gray-500);
-  background: var(--gray-100); padding: 4px 10px; border-radius: 20px;
+/* ── Neighborhood button ── */
+.neighborhood-btn {
+  display: flex; align-items: center; gap: 5px;
+  padding: 5px 12px; border-radius: 20px;
+  border: 1.5px solid var(--gray-200);
+  background: var(--gray-50); cursor: pointer;
+  font-size: 0.78rem; font-weight: 600; color: var(--gray-700);
+  transition: border-color .15s, background .15s;
 }
+.neighborhood-btn:hover { border-color: var(--blue); background: #eff6ff; }
+.neighborhood-pin { font-size: 0.85rem; }
+.neighborhood-name { max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.neighborhood-caret { font-size: 0.65rem; color: var(--gray-400); }
 .my-avatar {
   width: 34px; height: 34px; border-radius: 50%; overflow: hidden;
   border: 2px solid var(--blue); cursor: pointer;
@@ -95,38 +104,7 @@ body { background: var(--gray-50); color: var(--gray-900); }
 .nav-label { font-size: 0.7rem; font-weight: 600; }
 
 /* ── Map ── */
-.map-container {
-  height: 100%;
-  position: relative;
-}
-.map-controls {
-  position: absolute;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-  display: flex;
-  gap: 6px;
-  background: #fff;
-  border-radius: 20px;
-  padding: 4px;
-  box-shadow: 0 2px 12px rgba(0,0,0,.15);
-}
-.layer-btn {
-  padding: 6px 16px;
-  border-radius: 16px;
-  border: none;
-  background: transparent;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--gray-500);
-  cursor: pointer;
-  transition: all .15s;
-}
-.layer-btn.active {
-  background: var(--blue);
-  color: #fff;
-}
+.map-container { height: 100%; position: relative; }
 
 /* ── Grid page ── */
 .grid-page {
@@ -168,53 +146,65 @@ body { background: var(--gray-50); color: var(--gray-900); }
   color: #fff;
 }
 
-.user-grid {
+/* ── Photo grid ── */
+.photo-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  padding: 0 12px 16px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+  padding: 10px 12px 16px;
+}
+.photo-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 4px;
+  border-radius: 12px;
+  transition: background .12s;
+}
+.photo-cell:hover { background: var(--gray-100); }
+.photo-img-wrap {
+  position: relative;
+  width: 76px; height: 76px;
+}
+.photo-img {
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2.5px solid var(--gray-200);
+}
+.photo-online-dot {
+  position: absolute;
+  bottom: 3px; right: 3px;
+  width: 13px; height: 13px;
+  border-radius: 50%;
+  background: var(--green);
+  border: 2px solid #fff;
+}
+.photo-username {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  text-align: center;
+  max-width: 76px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.user-card {
-  background: #fff;
-  border: 1px solid var(--gray-200);
-  border-radius: 16px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: transform .15s, box-shadow .15s;
-}
-.user-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0,0,0,.1);
-}
-.card-avatar-wrap {
-  position: relative;
-  background: var(--gray-100);
-  height: 120px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.card-avatar { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; }
+/* online-dot used in modals */
 .online-dot {
   position: absolute;
-  bottom: 10px;
-  right: 10px;
+  bottom: 10px; right: 10px;
   width: 12px; height: 12px;
-  border-radius: 50%;
-  border: 2px solid #fff;
+  border-radius: 50%; border: 2px solid #fff;
 }
 .online-dot.online { background: var(--green); }
 .online-dot.offline { background: var(--gray-400); }
 .online-dot.lg { width: 16px; height: 16px; bottom: 6px; right: 6px; }
-
-.card-body { padding: 10px; }
-.card-name { font-size: 0.88rem; font-weight: 700; color: var(--gray-900); }
-.card-neighborhood { font-size: 0.72rem; color: var(--gray-500); margin-top: 1px; }
-.card-bio { font-size: 0.75rem; color: var(--gray-700); margin-top: 4px; line-height: 1.4;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.card-interests { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
-.card-distance { font-size: 0.72rem; color: var(--blue); font-weight: 600; margin-top: 6px; }
 
 /* ── Badges ── */
 .badge {
@@ -351,3 +341,42 @@ body { background: var(--gray-50); color: var(--gray-900); }
 .event-form select:focus { border-color: var(--blue); }
 .form-row { display: flex; gap: 10px; }
 .form-row label { flex: 1; }
+
+/* ── Neighborhood picker ── */
+.picker-modal {
+  align-items: stretch;
+  padding: 0 0 40px;
+  gap: 0;
+  max-height: 75dvh;
+}
+.picker-handle {
+  width: 36px; height: 4px;
+  background: var(--gray-200); border-radius: 2px;
+  margin: 12px auto 0;
+  flex-shrink: 0;
+}
+.picker-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--gray-100);
+  flex-shrink: 0;
+}
+.picker-title { font-size: 1rem; font-weight: 700; color: var(--gray-900); }
+.picker-list {
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.picker-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px;
+  border: none; background: none; cursor: pointer; text-align: left;
+  border-bottom: 1px solid var(--gray-100);
+  transition: background .1s;
+}
+.picker-item:hover { background: var(--gray-50); }
+.picker-item-active { background: #eff6ff; }
+.picker-item-active .picker-item-name { color: var(--blue); font-weight: 700; }
+.picker-item-name { font-size: 0.9rem; color: var(--gray-700); font-weight: 500; }
+.picker-check { color: var(--blue); font-weight: 700; font-size: 1rem; }

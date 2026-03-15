@@ -2,6 +2,24 @@
 
 export const CHICAGO_CENTER = [41.8781, -87.6298];
 
+export const NEIGHBORHOODS = [
+  { name: "The Loop",      lat: 41.8756, lng: -87.6244 },
+  { name: "River North",   lat: 41.8930, lng: -87.6330 },
+  { name: "Gold Coast",    lat: 41.9040, lng: -87.6267 },
+  { name: "Lincoln Park",  lat: 41.9210, lng: -87.6376 },
+  { name: "Wicker Park",   lat: 41.9087, lng: -87.6765 },
+  { name: "Logan Square",  lat: 41.9214, lng: -87.6531 },
+  { name: "Pilsen",        lat: 41.8570, lng: -87.6580 },
+  { name: "Bridgeport",    lat: 41.8450, lng: -87.6430 },
+  { name: "Hyde Park",     lat: 41.7943, lng: -87.5907 },
+  { name: "Andersonville", lat: 41.9801, lng: -87.6681 },
+  { name: "Boystown",      lat: 41.9440, lng: -87.6493 },
+  { name: "Chinatown",     lat: 41.8523, lng: -87.6324 },
+  { name: "Bucktown",      lat: 41.9170, lng: -87.6830 },
+  { name: "South Loop",    lat: 41.8630, lng: -87.6213 },
+  { name: "Uptown",        lat: 41.9654, lng: -87.6601 },
+];
+
 export const mockUsers = [
   {
     id: 1,

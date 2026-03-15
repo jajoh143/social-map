@@ -2,6 +2,7 @@ import { useState } from "react";
 import MapView from "./components/MapView";
 import ProximityGrid from "./components/ProximityGrid";
 import EventsView from "./components/EventsView";
+import NeighborhoodPicker from "./components/NeighborhoodPicker";
 import { mockUsers, mockEvents, CHICAGO_CENTER } from "./data/mockData";
 import "./App.css";
 
@@ -17,6 +18,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("map");
   const [users] = useState(mockUsers);
   const [events, setEvents] = useState(mockEvents);
+  const [selectedNeighborhood, setSelectedNeighborhood] = useState(null);
+  const [showPicker, setShowPicker] = useState(false);
 
   const handleAddEvent = (event) => {
     setEvents((prev) => [...prev, event]);
@@ -31,7 +34,16 @@ export default function App() {
             <span className="logo-text">ChiSocial</span>
           </div>
           <div className="header-right">
-            <span className="my-location-badge">📌 The Loop</span>
+            <button
+              className="neighborhood-btn"
+              onClick={() => setShowPicker(true)}
+            >
+              <span className="neighborhood-pin">📌</span>
+              <span className="neighborhood-name">
+                {selectedNeighborhood ? selectedNeighborhood.name : "Chicago"}
+              </span>
+              <span className="neighborhood-caret">▾</span>
+            </button>
             <div className="my-avatar">
               <img
                 src="https://api.dicebear.com/7.x/personas/svg?seed=me"
@@ -48,12 +60,16 @@ export default function App() {
             users={users}
             events={events}
             myLocation={MY_LOCATION}
+            selectedNeighborhood={selectedNeighborhood}
             onUserClick={() => {}}
-            onEventClick={() => {}}
           />
         )}
         {activeTab === "grid" && (
-          <ProximityGrid users={users} myLocation={MY_LOCATION} />
+          <ProximityGrid
+            users={users}
+            myLocation={MY_LOCATION}
+            selectedNeighborhood={selectedNeighborhood}
+          />
         )}
         {activeTab === "events" && (
           <EventsView events={events} onAddEvent={handleAddEvent} />
@@ -72,6 +88,14 @@ export default function App() {
           </button>
         ))}
       </nav>
+
+      {showPicker && (
+        <NeighborhoodPicker
+          selected={selectedNeighborhood}
+          onSelect={setSelectedNeighborhood}
+          onClose={() => setShowPicker(false)}
+        />
+      )}
     </div>
   );
 }

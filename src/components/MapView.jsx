@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { CHICAGO_CENTER, getDistance } from "../data/mockData";
 
-// Fix default marker icons broken by Vite bundling
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -24,16 +23,15 @@ function createUserIcon(user) {
     className: "",
     html: `
       <div style="
-        width:44px;height:44px;border-radius:50%;
-        border:3px solid ${user.online ? "#22c55e" : "#9ca3af"};
-        overflow:hidden;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);
-        cursor:pointer;
+        width:42px;height:42px;border-radius:50%;
+        border:2.5px solid ${user.online ? "#22c55e" : "#4b5563"};
+        overflow:hidden;background:#1f2937;
+        box-shadow:0 2px 10px rgba(0,0,0,0.6);cursor:pointer;
       ">
         <img src="${user.avatar}" style="width:100%;height:100%;object-fit:cover;" />
-      </div>
-    `,
-    iconSize: [44, 44],
-    iconAnchor: [22, 22],
+      </div>`,
+    iconSize: [42, 42],
+    iconAnchor: [21, 21],
     popupAnchor: [0, -24],
   });
 }
@@ -46,92 +44,126 @@ function createEventIcon(event) {
       <div style="
         background:${color};color:#fff;
         padding:4px 10px;border-radius:20px;
-        font-size:12px;font-weight:600;
-        white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.3);
-        cursor:pointer;
-      ">${event.title}</div>
-    `,
+        font-size:11px;font-weight:700;letter-spacing:.3px;
+        white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,0.5);cursor:pointer;
+      ">${event.title}</div>`,
     iconAnchor: [0, 10],
     popupAnchor: [60, -10],
   });
 }
 
-export default function MapView({ users, events, myLocation, onUserClick, onEventClick }) {
+// Dark popup styles injected once
+let popupStyleInjected = false;
+function injectPopupStyle() {
+  if (popupStyleInjected) return;
+  popupStyleInjected = true;
+  const s = document.createElement("style");
+  s.textContent = `
+    .leaflet-popup-content-wrapper {
+      background: #1f2937 !important;
+      color: #f9fafb !important;
+      border-radius: 12px !important;
+      border: 1px solid #374151 !important;
+      box-shadow: 0 8px 24px rgba(0,0,0,.6) !important;
+    }
+    .leaflet-popup-tip { background: #1f2937 !important; }
+    .leaflet-popup-close-button { color: #9ca3af !important; }
+  `;
+  document.head.appendChild(s);
+}
+
+export default function MapView({ users, events, myLocation, selectedNeighborhood, onUserClick }) {
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
   const markersRef = useRef([]);
-  const [activeLayer, setActiveLayer] = useState("both");
 
+  // Init map once
   useEffect(() => {
     if (mapInstance.current) return;
+    injectPopupStyle();
+
     mapInstance.current = L.map(mapRef.current, {
       center: CHICAGO_CENTER,
       zoom: 13,
-      zoomControl: true,
+      zoomControl: false,
     });
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
-      maxZoom: 19,
-    }).addTo(mapInstance.current);
+    // Dark, no-label tiles from CartoDB
+    L.tileLayer(
+      "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png",
+      {
+        attribution:
+          '© <a href="https://www.openstreetmap.org/copyright">OSM</a> © <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: "abcd",
+        maxZoom: 19,
+      }
+    ).addTo(mapInstance.current);
 
-    // My location marker
+    L.control.zoom({ position: "bottomright" }).addTo(mapInstance.current);
+
+    // My location pulse
     L.circleMarker(myLocation, {
-      radius: 10,
+      radius: 9,
       fillColor: "#3b82f6",
-      color: "#fff",
-      weight: 3,
+      color: "#1d4ed8",
+      weight: 2,
       fillOpacity: 1,
     })
       .addTo(mapInstance.current)
-      .bindPopup("<b>You are here</b>");
+      .bindPopup('<span style="color:#f9fafb;font-weight:700">You are here</span>');
   }, []);
 
+  // Fly to selected neighborhood
+  useEffect(() => {
+    if (!mapInstance.current || !selectedNeighborhood) return;
+    mapInstance.current.flyTo(
+      [selectedNeighborhood.lat, selectedNeighborhood.lng],
+      14,
+      { duration: 0.8 }
+    );
+  }, [selectedNeighborhood]);
+
+  // Redraw markers whenever data changes
   useEffect(() => {
     if (!mapInstance.current) return;
     markersRef.current.forEach((m) => m.remove());
     markersRef.current = [];
 
-    if (activeLayer !== "events") {
-      users.forEach((user) => {
-        const dist = getDistance(myLocation[0], myLocation[1], user.lat, user.lng).toFixed(1);
-        const marker = L.marker([user.lat, user.lng], { icon: createUserIcon(user) })
-          .addTo(mapInstance.current)
-          .bindPopup(
-            `<div style="min-width:160px">
-              <div style="font-weight:700;font-size:14px">${user.name}, ${user.age}</div>
-              <div style="color:#6b7280;font-size:12px">${user.neighborhood}</div>
-              <div style="font-size:12px;margin-top:4px">${user.bio}</div>
-              <div style="font-size:11px;margin-top:6px;color:#3b82f6">${dist} mi away</div>
-              <button onclick="window.__userClick(${user.id})" style="
-                margin-top:8px;width:100%;padding:6px;background:#3b82f6;
-                color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;
-              ">View Profile</button>
-            </div>`
-          );
-        markersRef.current.push(marker);
-      });
-    }
+    users.forEach((user) => {
+      const dist = getDistance(myLocation[0], myLocation[1], user.lat, user.lng).toFixed(1);
+      const marker = L.marker([user.lat, user.lng], { icon: createUserIcon(user) })
+        .addTo(mapInstance.current)
+        .bindPopup(
+          `<div style="min-width:150px">
+            <div style="font-weight:700;font-size:13px;color:#f9fafb">${user.name}, ${user.age}</div>
+            <div style="color:#9ca3af;font-size:11px;margin-top:2px">${user.neighborhood}</div>
+            <div style="font-size:12px;margin-top:5px;color:#d1d5db">${user.bio}</div>
+            <div style="font-size:11px;margin-top:6px;color:#60a5fa">${dist} mi away</div>
+            <button onclick="window.__userClick(${user.id})" style="
+              margin-top:8px;width:100%;padding:6px;background:#3b82f6;
+              color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;
+            ">View Profile</button>
+          </div>`
+        );
+      markersRef.current.push(marker);
+    });
 
-    if (activeLayer !== "users") {
-      events.forEach((event) => {
-        const marker = L.marker([event.lat, event.lng], { icon: createEventIcon(event) })
-          .addTo(mapInstance.current)
-          .bindPopup(
-            `<div style="min-width:160px">
-              <div style="font-weight:700;font-size:14px">${event.title}</div>
-              <div style="color:#6b7280;font-size:12px">${event.neighborhood}</div>
-              <div style="font-size:12px;margin-top:4px">${event.description}</div>
-              <div style="font-size:11px;margin-top:6px">
-                📅 ${event.date} at ${event.time}<br/>
-                👥 ${event.attendees} attending
-              </div>
-            </div>`
-          );
-        markersRef.current.push(marker);
-      });
-    }
-  }, [users, events, activeLayer]);
+    events.forEach((event) => {
+      const marker = L.marker([event.lat, event.lng], { icon: createEventIcon(event) })
+        .addTo(mapInstance.current)
+        .bindPopup(
+          `<div style="min-width:150px">
+            <div style="font-weight:700;font-size:13px;color:#f9fafb">${event.title}</div>
+            <div style="color:#9ca3af;font-size:11px;margin-top:2px">${event.neighborhood}</div>
+            <div style="font-size:12px;margin-top:5px;color:#d1d5db">${event.description}</div>
+            <div style="font-size:11px;margin-top:6px;color:#9ca3af">
+              📅 ${event.date} at ${event.time} · 👥 ${event.attendees}
+            </div>
+          </div>`
+        );
+      markersRef.current.push(marker);
+    });
+  }, [users, events]);
 
   useEffect(() => {
     window.__userClick = (id) => {
@@ -141,20 +173,5 @@ export default function MapView({ users, events, myLocation, onUserClick, onEven
     return () => { delete window.__userClick; };
   }, [users, onUserClick]);
 
-  return (
-    <div className="map-container">
-      <div className="map-controls">
-        {["both", "users", "events"].map((l) => (
-          <button
-            key={l}
-            className={`layer-btn ${activeLayer === l ? "active" : ""}`}
-            onClick={() => setActiveLayer(l)}
-          >
-            {l === "both" ? "All" : l.charAt(0).toUpperCase() + l.slice(1)}
-          </button>
-        ))}
-      </div>
-      <div ref={mapRef} style={{ height: "100%", width: "100%" }} />
-    </div>
-  );
+  return <div ref={mapRef} style={{ height: "100%", width: "100%" }} />;
 }
