@@ -3,7 +3,24 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { CHICAGO_CENTER, getDistance } from "../data/mockData";
 
-const ACCURACY_RING_COLOR = "rgba(59,130,246,0.15)";
+function buildMyIcon(avatarSrc) {
+  return L.divIcon({
+    className: "",
+    html: `
+      <div style="
+        width:46px;height:46px;border-radius:50%;
+        border:3px solid #3b82f6;
+        overflow:hidden;background:#1e3a5f;
+        box-shadow:0 0 0 3px rgba(59,130,246,0.35), 0 3px 12px rgba(0,0,0,0.7);
+        cursor:pointer;
+      ">
+        <img src="${avatarSrc}" style="width:100%;height:100%;object-fit:cover;" />
+      </div>`,
+    iconSize: [46, 46],
+    iconAnchor: [23, 23],
+    popupAnchor: [0, -26],
+  });
+}
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -74,7 +91,7 @@ function injectPopupStyle() {
   document.head.appendChild(s);
 }
 
-export default function MapView({ users, events, myLocation, locationReady, selectedNeighborhood, onUserClick }) {
+export default function MapView({ users, events, myLocation, locationReady, selectedNeighborhood, profile, onUserClick }) {
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
   const markersRef = useRef([]);
@@ -104,29 +121,26 @@ export default function MapView({ users, events, myLocation, locationReady, sele
 
     L.control.zoom({ position: "bottomright" }).addTo(mapInstance.current);
 
-    // My profile avatar marker
-    const myIcon = L.divIcon({
-      className: "",
-      html: `
-        <div style="
-          width:46px;height:46px;border-radius:50%;
-          border:3px solid #3b82f6;
-          overflow:hidden;background:#1e3a5f;
-          box-shadow:0 0 0 3px rgba(59,130,246,0.35), 0 3px 12px rgba(0,0,0,0.7);
-          cursor:pointer;
-        ">
-          <img src="https://api.dicebear.com/7.x/personas/svg?seed=me"
-               style="width:100%;height:100%;object-fit:cover;" />
-        </div>`,
-      iconSize: [46, 46],
-      iconAnchor: [23, 23],
-      popupAnchor: [0, -26],
-    });
+    // My profile avatar marker — avatar src and name updated after profile loads
+    const avatarSrc = profile?.avatar ?? "https://api.dicebear.com/7.x/personas/svg?seed=me";
+    const myIcon = buildMyIcon(avatarSrc);
+    const popupLabel = profile ? `<span style="color:#f9fafb;font-weight:700">${profile.name}</span><br/><span style="color:#9ca3af;font-size:11px">${profile.neighborhood}</span>` : '<span style="color:#f9fafb;font-weight:700">You</span>';
 
     myDotRef.current = L.marker(CHICAGO_CENTER, { icon: myIcon, zIndexOffset: 1000 })
       .addTo(mapInstance.current)
-      .bindPopup('<span style="color:#f9fafb;font-weight:700">You</span>');
+      .bindPopup(popupLabel);
   }, []);
+
+  // Update my marker icon + popup when profile changes
+  useEffect(() => {
+    if (!myDotRef.current || !profile) return;
+    myDotRef.current.setIcon(buildMyIcon(profile.avatar));
+    myDotRef.current
+      .getPopup()
+      ?.setContent(
+        `<span style="color:#f9fafb;font-weight:700">${profile.name}</span><br/><span style="color:#9ca3af;font-size:11px">${profile.neighborhood}</span>`
+      );
+  }, [profile]);
 
   // Move the blue dot whenever myLocation updates; fly there on first real fix
   useEffect(() => {

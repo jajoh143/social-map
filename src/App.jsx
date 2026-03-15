@@ -3,7 +3,10 @@ import MapView from "./components/MapView";
 import ProximityGrid from "./components/ProximityGrid";
 import EventsView from "./components/EventsView";
 import NeighborhoodPicker from "./components/NeighborhoodPicker";
+import ProfileSetup from "./components/ProfileSetup";
+import ProfileEdit from "./components/ProfileEdit";
 import useGeolocation from "./hooks/useGeolocation";
+import useProfile from "./hooks/useProfile";
 import { mockUsers, mockEvents } from "./data/mockData";
 import "./App.css";
 
@@ -19,11 +22,23 @@ export default function App() {
   const [events, setEvents] = useState(mockEvents);
   const [selectedNeighborhood, setSelectedNeighborhood] = useState(null);
   const [showPicker, setShowPicker] = useState(false);
-  const { location: myLocation, ready: locationReady, error: locationError } = useGeolocation();
+  const [showEditProfile, setShowEditProfile] = useState(false);
+
+  const { location: myLocation, ready: locationReady } = useGeolocation();
+  const { profile, saveProfile, clearProfile } = useProfile();
 
   const handleAddEvent = (event) => {
     setEvents((prev) => [...prev, event]);
   };
+
+  // First launch — no profile yet
+  if (!profile) {
+    return (
+      <div className="app">
+        <ProfileSetup onComplete={saveProfile} />
+      </div>
+    );
+  }
 
   return (
     <div className="app">
@@ -46,12 +61,13 @@ export default function App() {
               </span>
               <span className="neighborhood-caret">▾</span>
             </button>
-            <div className="my-avatar">
-              <img
-                src="https://api.dicebear.com/7.x/personas/svg?seed=me"
-                alt="Me"
-              />
-            </div>
+            <button
+              className="my-avatar"
+              onClick={() => setShowEditProfile(true)}
+              title="Edit profile"
+            >
+              <img src={profile.avatar} alt={profile.name} />
+            </button>
           </div>
         </div>
       </header>
@@ -64,6 +80,7 @@ export default function App() {
             myLocation={myLocation}
             locationReady={locationReady}
             selectedNeighborhood={selectedNeighborhood}
+            profile={profile}
             onUserClick={() => {}}
           />
         )}
@@ -97,6 +114,18 @@ export default function App() {
           selected={selectedNeighborhood}
           onSelect={setSelectedNeighborhood}
           onClose={() => setShowPicker(false)}
+        />
+      )}
+
+      {showEditProfile && (
+        <ProfileEdit
+          profile={profile}
+          onSave={saveProfile}
+          onClose={() => setShowEditProfile(false)}
+          onDeleteProfile={() => {
+            clearProfile();
+            setShowEditProfile(false);
+          }}
         />
       )}
     </div>
