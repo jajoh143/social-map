@@ -3,10 +3,9 @@ import MapView from "./components/MapView";
 import ProximityGrid from "./components/ProximityGrid";
 import EventsView from "./components/EventsView";
 import NeighborhoodPicker from "./components/NeighborhoodPicker";
-import { mockUsers, mockEvents, CHICAGO_CENTER } from "./data/mockData";
+import useGeolocation from "./hooks/useGeolocation";
+import { mockUsers, mockEvents } from "./data/mockData";
 import "./App.css";
-
-const MY_LOCATION = CHICAGO_CENTER;
 
 const NAV_ITEMS = [
   { id: "map", label: "Map", icon: "🗺️" },
@@ -20,6 +19,7 @@ export default function App() {
   const [events, setEvents] = useState(mockEvents);
   const [selectedNeighborhood, setSelectedNeighborhood] = useState(null);
   const [showPicker, setShowPicker] = useState(false);
+  const { location: myLocation, ready: locationReady, error: locationError } = useGeolocation();
 
   const handleAddEvent = (event) => {
     setEvents((prev) => [...prev, event]);
@@ -38,7 +38,9 @@ export default function App() {
               className="neighborhood-btn"
               onClick={() => setShowPicker(true)}
             >
-              <span className="neighborhood-pin">📌</span>
+              <span className="neighborhood-pin">
+                {locationReady ? "📌" : "⏳"}
+              </span>
               <span className="neighborhood-name">
                 {selectedNeighborhood ? selectedNeighborhood.name : "Chicago"}
               </span>
@@ -59,7 +61,8 @@ export default function App() {
           <MapView
             users={users}
             events={events}
-            myLocation={MY_LOCATION}
+            myLocation={myLocation}
+            locationReady={locationReady}
             selectedNeighborhood={selectedNeighborhood}
             onUserClick={() => {}}
           />
@@ -67,7 +70,7 @@ export default function App() {
         {activeTab === "grid" && (
           <ProximityGrid
             users={users}
-            myLocation={MY_LOCATION}
+            myLocation={myLocation}
             selectedNeighborhood={selectedNeighborhood}
           />
         )}

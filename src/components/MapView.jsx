@@ -3,6 +3,8 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { CHICAGO_CENTER, getDistance } from "../data/mockData";
 
+const ACCURACY_RING_COLOR = "rgba(59,130,246,0.15)";
+
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -72,12 +74,14 @@ function injectPopupStyle() {
   document.head.appendChild(s);
 }
 
-export default function MapView({ users, events, myLocation, selectedNeighborhood, onUserClick }) {
+export default function MapView({ users, events, myLocation, locationReady, selectedNeighborhood, onUserClick }) {
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
   const markersRef = useRef([]);
+  const myDotRef = useRef(null);        // blue "you are here" circle
+  const flewToUserRef = useRef(false);  // only fly to user location once
 
-  // Init map once
+  // Init map once (always starts at Chicago center)
   useEffect(() => {
     if (mapInstance.current) return;
     injectPopupStyle();
@@ -88,7 +92,6 @@ export default function MapView({ users, events, myLocation, selectedNeighborhoo
       zoomControl: false,
     });
 
-    // Dark, no-label tiles from CartoDB
     L.tileLayer(
       "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png",
       {
@@ -101,8 +104,8 @@ export default function MapView({ users, events, myLocation, selectedNeighborhoo
 
     L.control.zoom({ position: "bottomright" }).addTo(mapInstance.current);
 
-    // My location pulse
-    L.circleMarker(myLocation, {
+    // Placeholder dot at Chicago center until real location arrives
+    myDotRef.current = L.circleMarker(CHICAGO_CENTER, {
       radius: 9,
       fillColor: "#3b82f6",
       color: "#1d4ed8",
@@ -113,7 +116,19 @@ export default function MapView({ users, events, myLocation, selectedNeighborhoo
       .bindPopup('<span style="color:#f9fafb;font-weight:700">You are here</span>');
   }, []);
 
-  // Fly to selected neighborhood
+  // Move the blue dot whenever myLocation updates; fly there on first real fix
+  useEffect(() => {
+    if (!mapInstance.current || !myDotRef.current) return;
+    const latlng = L.latLng(myLocation[0], myLocation[1]);
+    myDotRef.current.setLatLng(latlng);
+
+    if (locationReady && !flewToUserRef.current) {
+      flewToUserRef.current = true;
+      mapInstance.current.flyTo(latlng, 14, { duration: 1.2 });
+    }
+  }, [myLocation, locationReady]);
+
+  // Fly to selected neighborhood (overrides the auto-fly)
   useEffect(() => {
     if (!mapInstance.current || !selectedNeighborhood) return;
     mapInstance.current.flyTo(
